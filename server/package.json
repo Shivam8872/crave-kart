@@ -4,9 +4,9 @@
   "description": "Backend server for food delivery app",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "update-db": "npx update-browserslist-db@latest"
+    "start": "node index.js",          
+    "dev": "nodemon index.js",         
+    "update-db": "npx update-browserslist-db@latest" 
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -20,5 +20,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.x"      
   }
 }
