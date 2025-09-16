@@ -11,7 +11,7 @@ declare module 'axios' {
 
 // Use environment variables if available or fall back to the deployed backend URL for production
 // In production, change this to your actual deployed backend URL
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = "https://crave-kart-backendd.onrender.com"
 
 // Create axios instance
 const api = axios.create({
