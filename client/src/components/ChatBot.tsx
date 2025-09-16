@@ -19,7 +19,7 @@ const initialBotMessages = [
 
 // Get API key from environment variables or use the provided one
 // In production, this will come from the server environment
-const DEFAULT_API_KEY = import.meta.env.VITE_OPENAI_API_KEY ;
+const DEFAULT_API_KEY = import.meta.env.VITE_OPENAI_API_KEY ||"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"
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
