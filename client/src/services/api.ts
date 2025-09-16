@@ -19,7 +19,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
-  timeout: 15000, // Set a reasonable timeout
+  timeout: 30000, // Set a reasonable timeout
   // Add retries for network errors
   retry: 1,
   retryDelay: 1000
