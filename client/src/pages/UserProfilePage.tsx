@@ -1,7 +1,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Store, WifiOff } from "lucide-react";
+import { Plus, Store, WifiOff, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Layout from "@/components/Layout";
@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const UserProfilePage = () => {
-  const { currentUser, getUserOwnedShop, refreshUserShop } = useAuth();
+  const { currentUser, getUserOwnedShop, refreshUserShop, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
   const [userShop, setUserShop] = useState<any>(null);
@@ -284,10 +284,24 @@ const UserProfilePage = () => {
                       <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</h4>
                       <p className="mt-1">{currentUser.email}</p>
                     </div>
-                    
+
                     <div>
                       <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Joined</h4>
                       <p className="mt-1">{currentUser.createdAt ? new Date(currentUser.createdAt).toLocaleDateString() : "Unknown"}</p>
+                    </div>
+
+                    <div className="pt-4 mt-4 border-t">
+                      <Button 
+                        variant="destructive" 
+                        className="w-full sm:w-auto" 
+                        onClick={() => {
+                          logout();
+                          navigate("/login");
+                        }}
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Logout
+                      </Button>
                     </div>
                   </div>
                 </div>
