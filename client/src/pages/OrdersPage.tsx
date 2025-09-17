@@ -50,27 +50,33 @@ const OrdersPage = () => {
     <Layout>
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center mb-8">
+          <div className="flex items-center mb-6">
             <button
               onClick={() => navigate(-1)}
-              className="mr-4 text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white transition-colors"
+              className="mr-3 text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white transition-colors"
               aria-label="Go back"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <h1 className="text-3xl font-bold">Your Orders</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">Your Orders</h1>
           </div>
 
-          <Tabs defaultValue="current">
-            <TabsList className="mb-6">
-              <TabsTrigger value="current">
-                <Package className="h-4 w-4 mr-2" /> Current Orders
+          <Tabs defaultValue="current" className="w-full">
+            <TabsList className="mb-6 w-full flex flex-wrap gap-2">
+              <TabsTrigger value="current" className="flex-1">
+                <Package className="h-4 w-4 mr-2 hidden sm:inline-block" /> 
+                <span className="sm:inline">Current Orders</span>
+                <span className="sm:hidden">Current</span>
               </TabsTrigger>
-              <TabsTrigger value="scheduled">
-                <Clock className="h-4 w-4 mr-2" /> Scheduled Orders
+              <TabsTrigger value="scheduled" className="flex-1">
+                <Clock className="h-4 w-4 mr-2 hidden sm:inline-block" /> 
+                <span className="sm:inline">Scheduled Orders</span>
+                <span className="sm:hidden">Scheduled</span>
               </TabsTrigger>
-              <TabsTrigger value="addresses">
-                <ArrowLeft className="h-4 w-4 mr-2" /> Saved Addresses
+              <TabsTrigger value="addresses" className="flex-1">
+                <ArrowLeft className="h-4 w-4 mr-2 hidden sm:inline-block" /> 
+                <span className="sm:inline">Saved Addresses</span>
+                <span className="sm:hidden">Addresses</span>
               </TabsTrigger>
             </TabsList>
             
