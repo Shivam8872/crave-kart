@@ -24,12 +24,13 @@ interface AuthContextProps {
 
 export interface CurrentUser {
   id: string;
+  _id?: string;
   email: string;
-  userType: string;
+  userType: "customer" | "shopOwner" | "admin";
   name: string;
   ownedShopId?: string;
-  _id?: string;
-  createdAt?: Date; // Add the createdAt property
+  token?: string;
+  createdAt?: Date;
 }
 
 export interface Shop {
@@ -70,8 +71,9 @@ const AuthContext = createContext<AuthContextProps>({
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  // Initialize currentUser as null - we'll load it from the API
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userShop, setUserShop] = useState<Shop | null>(null);
   const [shopDataFetchStatus, setShopDataFetchStatus] = useState<'idle' | 'fetching' | 'fetched'>('idle');
@@ -199,10 +201,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const logout = () => {
-    auth.logout();
-    setCurrentUser(null);
-    navigate("/login");
+  const logout = async () => {
+    try {
+      // Attempt to logout with the server
+      await auth.logout();
+    } catch (error) {
+      console.error("Error during logout:", error);
+    } finally {
+      // Clear context state
+      setCurrentUser(null);
+      setUserShop(null);
+      setShopDataFetchStatus('idle');
+      
+      // Redirect to login page
+      navigate("/login");
+    }
   };
 
   const registerShop = async (shopData: Omit<Shop, "id" | "ownerId">) => {
