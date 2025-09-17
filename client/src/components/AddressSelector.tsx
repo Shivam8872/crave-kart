@@ -301,21 +301,23 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
   }
 
   return (
-    <div className="space-y-4">
+  <div className="space-y-4 px-2 sm:px-4 md:px-0">
       {addresses.length === 0 && !manualAddressMode ? (
-        <div className="text-center py-8 border rounded-md bg-gray-50 dark:bg-gray-900">
+  <div className="text-center py-8 border rounded-md bg-gray-50 dark:bg-gray-900 mx-auto max-w-md">
           <MapPin className="mx-auto h-8 w-8 text-gray-400 mb-2" />
           <p className="text-gray-500 mb-4">You have no saved addresses.</p>
           <div className="flex flex-col sm:flex-row justify-center gap-3">
             <Button 
               variant="default" 
               onClick={handleAddNew}
+              className="w-full sm:w-auto"
             >
               <Plus className="h-4 w-4 mr-2" /> Add New Address
             </Button>
             <Button 
               variant="outline"
               onClick={toggleManualAddressMode}
+              className="w-full sm:w-auto"
             >
               Enter Address Manually
             </Button>
@@ -336,7 +338,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
           </div>
           
           {manualAddressMode ? (
-            <div className="p-4 border rounded-lg">
+            <div className="p-3 sm:p-4 border rounded-lg">
               <Label htmlFor="manual-address">Enter your complete address</Label>
               <Textarea 
                 id="manual-address" 
@@ -345,11 +347,12 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
                 placeholder="Enter your full address including name, house/flat number, street, city, state and pincode"
                 className="mt-2 min-h-[100px]"
               />
-              <div className="mt-4 flex justify-between">
+              <div className="mt-4 flex flex-col sm:flex-row gap-2">
                 <Button 
                   variant="outline" 
                   onClick={handleAddNew} 
                   size="sm"
+                  className="w-full sm:w-auto"
                 >
                   Save this address
                 </Button>
@@ -364,10 +367,10 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
                 {addresses.map((address) => (
                   <div 
                     key={address.id} 
-                    className={`p-4 border rounded-lg cursor-pointer ${address.isDefault ? 'border-primary' : 'border-border'} ${selectedAddressId === address.id ? 'bg-primary/5' : ''}`}
+                    className={`p-3 sm:p-4 border rounded-lg cursor-pointer ${address.isDefault ? 'border-primary' : 'border-border'} ${selectedAddressId === address.id ? 'bg-primary/5' : ''}`}
                     onClick={() => handleSelectAddress(address)}
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
                       <RadioGroupItem value={address.id} id={`address-${address.id}`} />
                       <div className="flex-1">
                         {address.isDefault && (
@@ -392,7 +395,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
                 <Button 
                   variant="outline" 
                   onClick={handleAddNew}
-                  className="mt-2"
+                  className="mt-2 w-full sm:w-auto"
                 >
                   <Plus className="h-4 w-4 mr-2" /> Add New Address
                 </Button>
@@ -403,7 +406,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[525px]">
+  <DialogContent className="sm:max-w-[525px] w-full">
           <DialogHeader>
             <DialogTitle>Add New Address</DialogTitle>
             <DialogDescription>
@@ -414,7 +417,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               {/* Name and Phone number row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="name"
@@ -460,7 +463,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
               />
               
               {/* Address Line 2 (Street and landmark) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="street"
@@ -491,7 +494,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
               </div>
               
               {/* City and State row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="city"
@@ -522,7 +525,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
               </div>
               
               {/* Pincode and Label row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="pincode"
