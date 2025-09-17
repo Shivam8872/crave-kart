@@ -14,6 +14,7 @@ import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Address {
   id: string;
@@ -406,7 +407,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-  <DialogContent className="sm:max-w-[525px] w-full">
+  <DialogContent className="sm:max-w-[525px] w-[95%] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New Address</DialogTitle>
             <DialogDescription>
@@ -415,17 +416,17 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
           </DialogHeader>
           
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Name and Phone number row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel className="text-base">Full Name</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Enter full name" />
+                        <Input {...field} placeholder="Enter full name" className="h-11" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -437,9 +438,9 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
+                      <FormLabel className="text-base">Phone Number</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Enter phone number" type="tel" />
+                        <Input {...field} placeholder="Enter phone number" type="tel" className="h-11" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -452,10 +453,10 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
                 control={form.control}
                 name="houseNumber"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address Line 1</FormLabel>
+                  <FormItem className="col-span-full">
+                    <FormLabel className="text-base">Address Line 1</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="House/Flat number, Building name" />
+                      <Input {...field} placeholder="House/Flat number, Building name" className="h-11" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -463,15 +464,15 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
               />
               
               {/* Address Line 2 (Street and landmark) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <FormField
                   control={form.control}
                   name="street"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Street</FormLabel>
+                      <FormLabel className="text-base">Street</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Street name" />
+                        <Input {...field} placeholder="Street name" className="h-11" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -483,9 +484,9 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
                   name="landmark"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address Line 2 (Optional)</FormLabel>
+                      <FormLabel className="text-base">Address Line 2 (Optional)</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Landmark, area" />
+                        <Input {...field} placeholder="Landmark, area" className="h-11" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -494,15 +495,15 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
               </div>
               
               {/* City and State row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <FormField
                   control={form.control}
                   name="city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>City</FormLabel>
+                      <FormLabel className="text-base">City</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="City name" />
+                        <Input {...field} placeholder="City name" className="h-11" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -514,9 +515,9 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
                   name="state"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>State</FormLabel>
+                      <FormLabel className="text-base">State</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="State name" />
+                        <Input {...field} placeholder="State name" className="h-11" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -525,15 +526,15 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
               </div>
               
               {/* Pincode and Label row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <FormField
                   control={form.control}
                   name="pincode"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Pincode</FormLabel>
+                      <FormLabel className="text-base">Pincode</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="6-digit pincode" />
+                        <Input {...field} placeholder="6-digit pincode" className="h-11" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -545,18 +546,22 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
                   name="label"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address Type</FormLabel>
-                      <FormControl>
-                        <select
-                          className="w-full h-10 px-3 py-2 bg-background border border-input rounded-md"
-                          value={field.value}
-                          onChange={field.onChange}
-                        >
-                          <option value="home">Home</option>
-                          <option value="work">Work</option>
-                          <option value="other">Other</option>
-                        </select>
-                      </FormControl>
+                      <FormLabel className="text-base">Address Type</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-11">
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="home">Home</SelectItem>
+                          <SelectItem value="work">Work</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -574,27 +579,34 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
                         type="checkbox"
                         checked={field.value}
                         onChange={field.onChange}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Set as default address</FormLabel>
+                      <FormLabel className="text-base font-normal">Set as default address</FormLabel>
+                      <p className="text-sm text-muted-foreground">This will be your default delivery address</p>
                     </div>
                   </FormItem>
                 )}
               />
               
-              <DialogFooter>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  Save Address
-                </Button>
+              <DialogFooter className="sm:justify-end gap-4 mt-6">
+                <div className="grid grid-cols-2 gap-4 w-full sm:flex sm:w-auto">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setDialogOpen(false)}
+                    className="w-full sm:w-[100px] h-11"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit"
+                    className="w-full sm:w-[140px] h-11"
+                  >
+                    Save Address
+                  </Button>
+                </div>
               </DialogFooter>
             </form>
           </Form>
