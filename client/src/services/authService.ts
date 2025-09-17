@@ -154,8 +154,9 @@ export const login = async (credentials: Credentials) => {
       ...(response.data.ownedShopId && { ownedShopId: response.data.ownedShopId })
     };
     
-    // Store only the auth token in localStorage for API requests
+    // Store auth data in localStorage
     localStorage.setItem('authToken', user.token);
+    localStorage.setItem('currentUser', JSON.stringify(user));
     
     console.log("User logged in successfully:", user);
     return user;
@@ -188,49 +189,55 @@ export const logout = async () => {
   try {
     const token = localStorage.getItem('authToken');
     if (token) {
-      // Call the logout endpoint if your API has one
-      await api.post('/users/logout');
+      try {
+        // Call the logout endpoint if your API has one
+        await api.post('/users/logout');
+      } catch (error) {
+        console.error("Error calling logout endpoint:", error);
+        // Continue with local logout even if server logout fails
+      }
     }
-  } catch (error) {
-    console.error("Error during logout:", error);
   } finally {
-    // Always clear the auth token
+    // Always clear all auth data
     localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
   }
 };
 
 export const getCurrentUser = async () => {
   try {
     const token = localStorage.getItem('authToken');
-    if (!token) {
-      console.log("No auth token found");
+    const storedUser = localStorage.getItem('currentUser');
+
+    if (!token || !storedUser) {
+      console.log("No auth data found");
       return null;
     }
 
-    const response = await api.get('/users/me');
-    const userData = response.data;
-
-    // Validate and format user data
-    const userType = userData.userType;
-    if (userType !== 'customer' && userType !== 'shopOwner' && userType !== 'admin') {
-      throw new Error('Invalid user type received from server');
-    }
+    // First try to use stored user data
+    const parsedUser = JSON.parse(storedUser);
     
-    const user: User = {
-      id: userData._id,
-      email: userData.email,
-      name: userData.name,
-      userType: userType,
-      token,
-      createdAt: userData.createdAt,
-      ...(userData.ownedShopId && { ownedShopId: userData.ownedShopId })
-    };
-
-    console.log("Current user retrieved from API:", user);
-    return user;
+    try {
+      // Verify the token is still valid with the server
+      await api.get('/users/me');
+      return parsedUser;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        // Token is invalid/expired
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
+        return null;
+      }
+      
+      // For other errors (like network issues), keep using stored user data
+      console.warn("Could not verify token with server, using stored data");
+      return parsedUser;
+    }
   } catch (error) {
     console.error("Error getting current user:", error);
-    localStorage.removeItem('authToken'); // Clear invalid token
+    // Clear stored data if there's any error parsing it
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
     return null;
   }
 };
