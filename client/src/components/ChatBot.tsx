@@ -19,7 +19,7 @@ const initialBotMessages = [
 
 // Get API key from environment variables or use the provided one
 // In production, this will come from the server environment
-const DEFAULT_API_KEY = import.meta.env.VITE_OPENAI_API_KEY ||"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"
+const DEFAULT_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || "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";
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -367,7 +367,7 @@ const ChatBot = () => {
     <>
       {/* Chat Button */}
       <motion.div
-        className="fixed bottom-6 right-6 z-50"
+        className="fixed bottom-20 right-6 z-50 md:bottom-6"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
@@ -386,7 +386,7 @@ const ChatBot = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed bottom-24 right-6 w-80 sm:w-96 h-96 bg-white rounded-lg shadow-xl z-50 flex flex-col overflow-hidden border"
+            className="fixed bottom-36 right-6 w-80 sm:w-96 h-96 bg-white rounded-lg shadow-xl z-50 flex flex-col overflow-hidden border md:bottom-24"
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
