@@ -1,9 +1,13 @@
 
 import { Link } from "react-router-dom";
 
-const Footer = () => {
+interface FooterProps {
+  className?: string;
+}
+
+const Footer = ({ className = "" }: FooterProps) => {
   return (
-    <footer className="border-t">
+    <footer className={`border-t ${className}`}>
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
