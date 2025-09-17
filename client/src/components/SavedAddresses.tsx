@@ -182,18 +182,18 @@ const SavedAddresses = ({ onSelectAddress, showActions = true }: SavedAddressesP
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 px-4 sm:px-0">
       <div className="flex justify-between items-center">
-        <h3 className="font-medium">Your Addresses</h3>
+        <h3 className="font-medium text-lg">Your Addresses</h3>
         {showActions && (
-          <Button variant="outline" size="sm" onClick={handleAddNew}>
+          <Button variant="outline" size="sm" onClick={handleAddNew} className="whitespace-nowrap">
             <Plus className="h-4 w-4 mr-1" /> Add New
           </Button>
         )}
       </div>
 
       {addresses.length === 0 ? (
-        <div className="text-center py-8 border rounded-md bg-gray-50 dark:bg-gray-900">
+        <div className="text-center py-8 border rounded-md bg-gray-50 dark:bg-gray-900 mx-auto max-w-sm">
           <Home className="mx-auto h-8 w-8 text-gray-400 mb-2" />
           <p className="text-gray-500">No addresses saved</p>
           {showActions && (
@@ -208,26 +208,27 @@ const SavedAddresses = ({ onSelectAddress, showActions = true }: SavedAddressesP
           )}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 max-w-2xl mx-auto">
           {addresses.map((address) => (
-            <Card key={address.id} className={`p-3 ${address.isDefault ? 'border-primary' : ''}`}>
-              <div className="flex justify-between">
-                <div className="flex-1">
+            <Card key={address.id} className={`p-4 sm:p-5 ${address.isDefault ? 'border-primary' : ''}`}>
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-3 sm:gap-0">
+                <div className="flex-1 space-y-1">
                   {address.isDefault && (
                     <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-md mb-2 inline-block">
                       Default
                     </span>
                   )}
-                  <p className="font-medium">{formatAddress(address)}</p>
+                  <p className="font-medium break-words">{formatAddress(address)}</p>
                 </div>
                 
-                <div className="flex items-start space-x-2">
+                <div className="flex items-center justify-end space-x-2 border-t sm:border-t-0 pt-3 sm:pt-0">
                   {showActions ? (
                     <>
                       <Button 
                         variant="ghost" 
                         size="icon" 
                         onClick={() => handleEdit(address)}
+                        className="h-9 w-9"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -235,6 +236,7 @@ const SavedAddresses = ({ onSelectAddress, showActions = true }: SavedAddressesP
                         variant="ghost" 
                         size="icon"
                         onClick={() => handleDelete(address.id || '')}
+                        className="h-9 w-9"
                       >
                         <Trash className="h-4 w-4" />
                       </Button>
@@ -244,6 +246,7 @@ const SavedAddresses = ({ onSelectAddress, showActions = true }: SavedAddressesP
                       variant="outline" 
                       size="sm"
                       onClick={() => handleSelect(address)}
+                      className="w-full sm:w-auto"
                     >
                       <MapPin className="h-4 w-4 mr-1" /> Select
                     </Button>
@@ -256,14 +259,14 @@ const SavedAddresses = ({ onSelectAddress, showActions = true }: SavedAddressesP
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingAddress ? 'Edit Address' : 'Add New Address'}</DialogTitle>
           </DialogHeader>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 p-1">
             <div className="space-y-2">
-              <Label htmlFor="addressLine">Address Line</Label>
+              <Label htmlFor="addressLine" className="text-sm font-medium">Address Line</Label>
               <Input
                 id="addressLine"
                 name="addressLine"
@@ -271,12 +274,13 @@ const SavedAddresses = ({ onSelectAddress, showActions = true }: SavedAddressesP
                 onChange={handleInputChange}
                 placeholder="Street address, apartment, etc."
                 required
+                className="w-full"
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
+                <Label htmlFor="city" className="text-sm font-medium">City</Label>
                 <Input
                   id="city"
                   name="city"
@@ -284,11 +288,12 @@ const SavedAddresses = ({ onSelectAddress, showActions = true }: SavedAddressesP
                   onChange={handleInputChange}
                   placeholder="City"
                   required
+                  className="w-full"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="state">State</Label>
+                <Label htmlFor="state" className="text-sm font-medium">State</Label>
                 <Input
                   id="state"
                   name="state"
@@ -296,12 +301,13 @@ const SavedAddresses = ({ onSelectAddress, showActions = true }: SavedAddressesP
                   onChange={handleInputChange}
                   placeholder="State"
                   required
+                  className="w-full"
                 />
               </div>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="postalCode">Postal Code</Label>
+              <Label htmlFor="postalCode" className="text-sm font-medium">Postal Code</Label>
               <Input
                 id="postalCode"
                 name="postalCode"
@@ -309,30 +315,32 @@ const SavedAddresses = ({ onSelectAddress, showActions = true }: SavedAddressesP
                 onChange={handleInputChange}
                 placeholder="Postal Code"
                 required
+                className="w-full"
               />
             </div>
-            
-            <div className="flex items-center space-x-2">
+
+            <div className="flex items-center space-x-3">
               <input
                 type="checkbox"
                 id="isDefault"
                 name="isDefault"
                 checked={formData.isDefault}
                 onChange={handleInputChange}
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
               />
-              <Label htmlFor="isDefault">Set as default address</Label>
+              <Label htmlFor="isDefault" className="text-sm">Set as default address</Label>
             </div>
             
-            <DialogFooter>
+            <DialogFooter className="sm:justify-end gap-3 pt-4">
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={() => setDialogOpen(false)}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
-              <Button type="submit">
+              <Button type="submit" className="w-full sm:w-auto">
                 {editingAddress ? 'Save Changes' : 'Add Address'}
               </Button>
             </DialogFooter>
