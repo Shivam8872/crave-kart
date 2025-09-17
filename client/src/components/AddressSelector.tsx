@@ -407,7 +407,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-  <DialogContent className="sm:max-w-[525px] w-[95%] max-h-[90vh] overflow-y-auto">
+  <DialogContent className="sm:max-w-[525px] w-[95%] max-h-[90vh] overflow-y-auto pb-28 
           <DialogHeader>
             <DialogTitle>Add New Address</DialogTitle>
             <DialogDescription>
