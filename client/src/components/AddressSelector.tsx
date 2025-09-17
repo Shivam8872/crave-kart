@@ -82,12 +82,15 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
   });
 
   useEffect(() => {
-    if (currentUser?.id) {
-      fetchAddresses();
-    } else {
+    if (!currentUser || !currentUser.id) {
       setLoading(false);
+      return;
     }
-  }, [currentUser]);
+    
+    // Debug auth state
+    console.log("AddressSelector: Fetching addresses for user:", currentUser.id);
+    fetchAddresses();
+  }, [currentUser?.id]); // Only depend on the ID, not the whole user object
 
   // If there's a selected address, try to match it to an address in the list
   useEffect(() => {
@@ -153,11 +156,12 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
   };
 
   const handleAddNew = () => {
-    // Check if user is logged in
-    if (!currentUser?.id) {
+    // Check if user is logged in and has ID
+    if (!currentUser || !currentUser.id) {
+      console.error("AddressSelector: No user ID available when adding address");
       toast({
-        title: "Authentication required",
-        description: "Please log in to save an address",
+        title: "Authentication error",
+        description: "There was a problem with your login status. Please try logging out and back in.",
         variant: "destructive"
       });
       return;
