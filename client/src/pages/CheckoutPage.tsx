@@ -371,7 +371,7 @@ const CheckoutPage = () => {
               {/* Delivery Address */}
               <Card className="p-6 mb-8">
                 <h2 className="text-xl font-semibold mb-4">Delivery Address</h2>
-                {currentUser ? (
+                {currentUser && currentUser.id ? (
                   <AddressSelector 
                     onSelectAddress={handleAddressSelect}
                     selectedAddress={address}
