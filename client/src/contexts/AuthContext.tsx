@@ -80,14 +80,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check auth status on mount
+  // Check auth status on mount and handle stored credentials
   useEffect(() => {
     const checkAuthStatus = async () => {
       setIsLoading(true);
       try {
+        // Try to get user from stored credentials
         const user = await auth.getCurrentUser();
-        setCurrentUser(user);
+        
+        if (user) {
+          setCurrentUser(user);
+          console.log("Restored auth state for user:", user.email);
+          
+          // If we're on the login page, redirect to appropriate dashboard
+          if (window.location.pathname === '/login') {
+            if (user.userType === 'admin') {
+              navigate('/admin');
+            } else if (user.userType === 'shopOwner') {
+              navigate(user.ownedShopId ? '/shop-dashboard' : '/register-shop');
+            } else {
+              navigate('/');
+            }
+          }
+        } else {
+          // If no valid stored credentials and we're on a protected route,
+          // redirect to login
+          const protectedRoutes = ['/admin', '/shop-dashboard', '/profile'];
+          if (protectedRoutes.some(route => window.location.pathname.startsWith(route))) {
+            navigate('/login');
+          }
+        }
       } catch (error) {
+        console.error("Error checking auth status:", error);
         setCurrentUser(null);
       } finally {
         setIsLoading(false);
@@ -95,7 +119,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     checkAuthStatus();
-  }, []);
+  }, [navigate]);
 
   // Fetch user's shop when user is loaded
   useEffect(() => {
