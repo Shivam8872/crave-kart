@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Bot, X, Send, MessageCircle, Key, Eye, EyeOff } from "lucide-react";
+import { Bot, X, Send, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Input } from "@/components/ui/input";
 
 interface Message {
   content: string;
@@ -17,9 +16,8 @@ const initialBotMessages = [
   "You can ask me about restaurants, menu items, delivery, or how to use the app!",
 ];
 
-// Get API key from environment variables or use the provided one
-// In production, this will come from the server environment
-const DEFAULT_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || "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";
+// Gemini API key from env or fallback (provided). Prefer setting VITE_GEMINI_API_KEY in your env.
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyD7sNsVoE_Yf4bZyfPavxR5PLfS1OvLzKg";
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,14 +27,11 @@ const ChatBot = () => {
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [apiKey, setApiKey] = useState(DEFAULT_API_KEY);
-  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
-  const [apiKeyValidated, setApiKeyValidated] = useState(true); // Set to true by default
-  const [showApiKey, setShowApiKey] = useState(false);
+  const [apiKeyValidated] = useState(true); // Always true; we removed on-page API key entry
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const apiInputRef = useRef<HTMLInputElement>(null);
+  // Removed API key input UI/state
   
   // Auto-scroll to bottom of messages
   useEffect(() => {
@@ -47,123 +42,20 @@ const ChatBot = () => {
 
   // Focus input when chat opens
   useEffect(() => {
-    if (isOpen) {
-      if (apiKeyValidated && inputRef.current) {
-        setTimeout(() => {
-          inputRef.current?.focus();
-        }, 300);
-      } else if (showApiKeyInput && apiInputRef.current) {
-        setTimeout(() => {
-          apiInputRef.current?.focus();
-        }, 300);
-      }
+    if (isOpen && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 300);
     }
-  }, [isOpen, apiKeyValidated, showApiKeyInput]);
+  }, [isOpen]);
 
-  // Store the default API key in localStorage on first load
-  useEffect(() => {
-    // Store the API key in localStorage if not already there
-    if (!localStorage.getItem("openai_api_key")) {
-      localStorage.setItem("openai_api_key", DEFAULT_API_KEY);
-    }
-  }, []);
+  // No need to store API key in localStorage anymore
 
-  const validateStoredApiKey = async (keyToValidate: string) => {
-    try {
-      setIsLoading(true);
-      // Make a minimal API call to validate the key
-      const response = await fetch("https://api.openai.com/v1/models", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${keyToValidate}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
-      }
-      
-      // Key is valid
-      setApiKeyValidated(true);
-      setShowApiKeyInput(false);
-      
-      // We no longer add a validation message here
-    } catch (error) {
-      console.error("API Key validation failed:", error);
-      // Show the API key input since validation failed
-      setShowApiKeyInput(true);
-      
-      const systemMessage: Message = {
-        content: "I couldn't validate the API key. Please provide a valid OpenAI API key.",
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, systemMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Removed validation of API keys; Gemini key is taken from environment
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
   };
 
-  const toggleShowApiKey = () => {
-    setShowApiKey(!showApiKey);
-  };
-
-  const handleChangeApiKey = () => {
-    setShowApiKeyInput(true);
-    setApiKeyValidated(false);
-  };
-
-  const validateApiKey = async () => {
-    if (!apiKey.trim() || apiKey.trim() === "api-key") {
-      toast({
-        title: "Invalid API Key",
-        description: "Please enter a valid OpenAI API key.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    
-    try {
-      // Make a minimal API call to validate the key
-      const response = await fetch("https://api.openai.com/v1/models", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
-      }
-      
-      // Key is valid
-      localStorage.setItem("openai_api_key", apiKey);
-      setApiKeyValidated(true);
-      setShowApiKeyInput(false);
-      toast({
-        title: "API Key Saved",
-        description: "Your OpenAI API key has been validated and saved.",
-      });
-      
-      // We no longer add a validation message here
-      
-    } catch (error) {
-      console.error("API Key validation failed:", error);
-      toast({
-        title: "API Key Invalid",
-        description: "Could not validate your OpenAI API key. Please check and try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Removed API key change/validation UI handlers
 
   const handleSendMessage = async () => {
     if (inputMessage.trim() === "") return;
@@ -195,38 +87,36 @@ const ChatBot = () => {
         return;
       }
 
-      // Get the current API key (either the one in state or from localStorage)
-      const currentApiKey = apiKey || localStorage.getItem("openai_api_key") || DEFAULT_API_KEY;
-
       // Create context from previous messages for better continuity
       const messageHistory = messages.slice(-6).map(msg => ({
         role: msg.isUser ? "user" : "assistant",
         content: msg.content
       }));
 
-      // Call OpenAI API
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${currentApiKey}`
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
+      // Call Gemini API (Generative Language API)
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+      // Build contents array for Gemini: map prior messages to contents
+      const contents = [
+        {
+          role: "user",
+          parts: [
             {
-              role: "system",
-              content: "You are a helpful assistant for a food delivery app called Crave-Kart. Provide concise, helpful responses about restaurants, food, delivery, the ordering process, and using the app. Keep responses under 150 words and focus on being practical and informative. If asked about topics unrelated to food delivery or the app, politely redirect the conversation back to DineHub services."
-            },
-            ...messageHistory,
-            {
-              role: "user",
-              content: inputMessage
+              text:
+                "You are a helpful assistant for a food delivery app called Crave-Kart. Provide concise, helpful responses about restaurants, food, delivery, the ordering process, and using the app. Keep responses under 150 words and focus on being practical and informative. If asked about topics unrelated to food delivery or the app, politely redirect the conversation back to Crave-Kart services."
             }
-          ],
-          max_tokens: 300,
-          temperature: 0.7,
-        })
+          ]
+        },
+        ...messageHistory.map(m => ({
+          role: m.role === "user" ? "user" : "model",
+          parts: [{ text: m.content }]
+        })),
+        { role: "user", parts: [{ text: inputMessage }] }
+      ];
+
+      const response = await fetch(geminiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents, generationConfig: { temperature: 0.7, maxOutputTokens: 300 } })
       });
 
       if (!response.ok) {
@@ -234,7 +124,7 @@ const ChatBot = () => {
       }
 
       const data = await response.json();
-      const aiResponse = data.choices[0].message.content;
+      const aiResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text || "I'm here to help with Crave-Kart!";
       
       // Add AI response
       const botMessage: Message = {
@@ -245,7 +135,7 @@ const ChatBot = () => {
       
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
-      console.error("Error calling OpenAI API:", error);
+      console.error("Error calling Gemini API:", error);
       
       // Fallback to pattern matching if API fails
       const fallbackResponse = generateFallbackBotResponse(inputMessage);
@@ -259,7 +149,7 @@ const ChatBot = () => {
       
       toast({
         title: "AI Service Error",
-        description: "There was an issue connecting to the AI service. Using fallback responses instead.",
+        description: "There was an issue connecting to Gemini. Using fallback responses instead.",
         variant: "destructive",
       });
     } finally {
@@ -270,11 +160,7 @@ const ChatBot = () => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (showApiKeyInput) {
-        validateApiKey();
-      } else {
-        handleSendMessage();
-      }
+      handleSendMessage();
     }
   };
 
@@ -398,20 +284,9 @@ const ChatBot = () => {
               <div className="flex-1">
                 <h3 className="font-medium">CraveKart AI Assistant</h3>
                 <p className="text-xs text-gray-300">
-                  {apiKeyValidated ? "AI Powered | Ask me anything" : "Setup Required"}
+                  AI Powered by Gemini | Ask me anything
                 </p>
               </div>
-              {apiKeyValidated && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleChangeApiKey}
-                  className="mr-2 text-xs text-gray-300 hover:text-white hover:bg-gray-800"
-                >
-                  <Key className="h-3 w-3 mr-1" />
-                  Change Key
-                </Button>
-              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -422,80 +297,7 @@ const ChatBot = () => {
               </Button>
             </div>
 
-            {/* API Key Input */}
-            {showApiKeyInput && (
-              <div className="p-4 border-b">
-                <div className="mb-2">
-                  <p className="text-sm font-medium mb-1">Enter your OpenAI API Key to activate the AI assistant:</p>
-                  <p className="text-xs text-gray-500 mb-2">
-                    You can get an API key from{" "}
-                    <a
-                      href="https://platform.openai.com/api-keys"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      OpenAI's platform
-                    </a>
-                  </p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="flex-1 relative">
-                    <Input
-                      ref={apiInputRef}
-                      type={showApiKey ? "text" : "password"}
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="sk-..."
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={toggleShowApiKey}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-                    >
-                      {showApiKey ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                  <Button
-                    onClick={validateApiKey}
-                    disabled={isLoading || !apiKey.trim()}
-                    className="bg-black hover:bg-gray-800 text-white"
-                  >
-                    {isLoading ? "Validating..." : "Save"}
-                  </Button>
-                </div>
-                <div className="flex justify-between mt-2">
-                  <p className="text-xs text-gray-500">
-                    Your API key is stored in your browser only and never sent to our servers.
-                  </p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs hover:bg-gray-100"
-                    onClick={() => {
-                      setShowApiKeyInput(false);
-                      // Add a message explaining the use of fallback mode
-                      setMessages(prev => [
-                        ...prev, 
-                        { 
-                          content: "I'll be using pre-programmed responses since no API key is provided. For more advanced AI capabilities, please add your OpenAI API key.", 
-                          isUser: false, 
-                          timestamp: new Date() 
-                        }
-                      ]);
-                    }}
-                  >
-                    Skip for now
-                  </Button>
-                </div>
-              </div>
-            )}
+            {/* Removed API Key Input UI */}
 
             {/* Chat Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -539,7 +341,7 @@ const ChatBot = () => {
             </div>
 
             {/* Chat Input */}
-            {!showApiKeyInput && (
+            {(
               <div className="p-3 border-t">
                 <div className="flex">
                   <Textarea
@@ -547,7 +349,7 @@ const ChatBot = () => {
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={apiKeyValidated ? "Type your message..." : "Type your message (using pre-programmed responses)..."}
+                    placeholder={"Type your message..."}
                     className="flex-1 resize-none"
                     rows={1}
                   />
@@ -559,19 +361,6 @@ const ChatBot = () => {
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
-                {!apiKeyValidated && (
-                  <div className="mt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full text-xs"
-                      onClick={() => setShowApiKeyInput(true)}
-                    >
-                      <Key className="h-3 w-3 mr-2" />
-                      Add OpenAI API Key for Full AI Features
-                    </Button>
-                  </div>
-                )}
               </div>
             )}
           </motion.div>
