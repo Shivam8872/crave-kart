@@ -130,7 +130,8 @@ router.post('/', async (req, res) => {
       password,
       name,
       userType,
-      isEmailVerified: false
+      // Email has already been verified via emailVerifiedToken in this pre-registration flow
+      isEmailVerified: true
     });
     
     const newUser = await user.save();
@@ -195,6 +196,34 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ message: err.message });
+  }
+});
+
+// Get current user from token
+router.get('/me', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    if (!token) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (e) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    const user = await User.findById(decoded.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error in /me:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 

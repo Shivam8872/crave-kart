@@ -115,7 +115,8 @@ export const register = async (userData: RegistrationData) => {
       userType: userType,
       token: response.data.token,
       createdAt: response.data.createdAt,
-      isEmailVerified: false, // New registrations start with unverified email
+      // Respect server value; after pre-verification signup this should be true
+      isEmailVerified: response.data.isEmailVerified ?? true,
       ...(response.data.ownedShopId && { ownedShopId: response.data.ownedShopId })
     };
     
