@@ -17,6 +17,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
   userType: {
     type: String,
     enum: ['customer', 'shopOwner', 'admin'],

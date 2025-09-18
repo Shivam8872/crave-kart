@@ -25,6 +25,7 @@ import RegisterShopPage from "./pages/RegisterShopPage";
 import ShopDashboardPage from "./pages/ShopDashboardPage";
 import OffersPage from "./pages/OffersPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 
 // Required dependencies
 import { MotionConfig } from "framer-motion";
@@ -48,6 +49,7 @@ const App = () => {
                   <Route path="/shops" element={<ShopsPage />} />
                   <Route path="/shop/:shopId" element={<ShopDetails />} />
                   <Route path="/cart" element={<CartPage />} />
+                  <Route path="/verify-email" element={<VerifyEmailPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/signup" element={<SignupPage />} />
                   <Route path="/checkout" element={<CheckoutPage />} />

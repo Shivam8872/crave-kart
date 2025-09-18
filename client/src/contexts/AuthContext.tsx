@@ -10,7 +10,7 @@ interface AuthContextProps {
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string, userType: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, userType: string) => Promise<CurrentUser>;
   logout: () => void;
   registerShop: (shopData: Omit<Shop, "id" | "ownerId">) => Promise<string>;
   updateShop: (shopId: string, shopData: Partial<Shop>) => Promise<void>;
@@ -28,6 +28,7 @@ export interface CurrentUser {
   email: string;
   userType: "customer" | "shopOwner" | "admin";
   name: string;
+  isEmailVerified: boolean;
   ownedShopId?: string;
   token?: string;
   createdAt?: Date;
@@ -56,7 +57,7 @@ const AuthContext = createContext<AuthContextProps>({
   isLoading: false,
   error: null,
   login: async () => {},
-  signup: async () => {},
+  signup: async () => ({ id: "", email: "", name: "", userType: "customer", isEmailVerified: false }),
   logout: () => {},
   registerShop: async () => "",
   updateShop: async () => {},
@@ -203,16 +204,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setError(null);
     try {
       const user = await auth.register({ email, password, name, userType: userType as "customer" | "shopOwner" | "admin" });
-      setCurrentUser(user);
-      
-      // Redirect based on user type
-      if (user.userType === 'admin') {
-        navigate("/admin");
-      } else if (user.userType === 'shopOwner') {
-        navigate("/register-shop");
-      } else {
-        navigate("/");
-      }
+      // Don't set current user or navigate until email is verified
+      return user;
     } catch (error: any) {
       setError(error.message || "Failed to register");
       toast({
@@ -220,6 +213,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Registration failed",
         description: error.message || "Failed to register"
       });
+      throw error;
     } finally {
       setIsLoading(false);
     }

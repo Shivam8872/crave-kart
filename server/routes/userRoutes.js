@@ -42,6 +42,57 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Send OTP for email verification
+router.post('/send-otp', async (req, res) => {
+  const { email } = req.body;
+  
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const otp = require('../utils/otpUtils').generateOTP();
+    require('../utils/otpUtils').storeOTP(email, otp);
+    
+    const emailSent = await require('../utils/emailService')
+      .sendVerificationEmail(email, otp);
+    
+    if (emailSent) {
+      res.json({ success: true, message: 'OTP sent successfully' });
+    } else {
+      res.status(500).json({ success: false, message: 'Failed to send OTP email' });
+    }
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+    res.status(500).json({ message: 'Error sending OTP' });
+  }
+});
+
+// Verify email with OTP
+router.post('/verify-email', async (req, res) => {
+  const { email, otp } = req.body;
+  
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isValid = require('../utils/otpUtils').verifyOTP(email, otp);
+    if (isValid) {
+      user.isEmailVerified = true;
+      await user.save();
+      res.json({ success: true, message: 'Email verified successfully' });
+    } else {
+      res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+    }
+  } catch (error) {
+    console.error('Error verifying email:', error);
+    res.status(500).json({ message: 'Error verifying email' });
+  }
+});
+
 // Create user (signup) - restrict to customer and shopOwner only
 router.post('/', async (req, res) => {
   const { email, password, name, userType } = req.body;

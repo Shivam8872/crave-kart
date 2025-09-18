@@ -1,7 +1,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Store, WifiOff, LogOut } from "lucide-react";
+import { Plus, Store, WifiOff, LogOut, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Layout from "@/components/Layout";
@@ -13,6 +13,8 @@ import OrderHistory from "@/components/OrderHistory";
 import * as shopService from "@/services/shopService";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmailVerification } from "@/components/EmailVerification";
+import { Alert } from "@/components/ui/alert";
 
 const UserProfilePage = () => {
   const { currentUser, getUserOwnedShop, refreshUserShop, logout } = useAuth();
@@ -271,6 +273,30 @@ const UserProfilePage = () => {
               </TabsList>
 
               <TabsContent value="profile">
+                {currentUser && !currentUser.isEmailVerified && (
+                  <div className="mb-6">
+                    <Alert className="mb-4">
+                      <AlertTriangle className="h-4 w-4" />
+                      <div className="ml-2">
+                        <h4 className="font-medium">Email Not Verified</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Please verify your email address to access all features.
+                        </p>
+                      </div>
+                    </Alert>
+                    <EmailVerification 
+                      email={currentUser.email}
+                      onVerificationComplete={() => {
+                        toast({
+                          title: "Success",
+                          description: "Email verified successfully!",
+                        });
+                        // Refresh the user data to update the verification status
+                        window.location.reload();
+                      }}
+                    />
+                  </div>
+                )}
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                   <h3 className="text-xl font-semibold mb-4">Personal Information</h3>
                   

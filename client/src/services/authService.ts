@@ -23,6 +23,7 @@ export interface User {
   ownedShopId?: string;
   token?: string;
   createdAt?: Date;
+  isEmailVerified: boolean;
 }
 
 // Demo users for offline development/testing
@@ -33,7 +34,8 @@ const DEMO_USERS: User[] = [
     name: 'Demo Customer',
     userType: 'customer' as const,
     token: 'demo-customer-token',
-    createdAt: new Date()
+    createdAt: new Date(),
+    isEmailVerified: true
   },
   {
     id: 'demo-shopowner-1',
@@ -42,7 +44,8 @@ const DEMO_USERS: User[] = [
     userType: 'shopOwner' as const,
     ownedShopId: 'demo-shop-1',
     token: 'demo-shopowner-token',
-    createdAt: new Date()
+    createdAt: new Date(),
+    isEmailVerified: true
   },
   {
     id: 'demo-admin-1',
@@ -50,7 +53,8 @@ const DEMO_USERS: User[] = [
     name: 'Demo Admin',
     userType: 'admin' as const,
     token: 'demo-admin-token',
-    createdAt: new Date()
+    createdAt: new Date(),
+    isEmailVerified: true
   }
 ];
 
@@ -68,6 +72,7 @@ const simulateDemoLogin = (email: string, password: string): User | null => {
       userType: demoUser.userType,
       token: demoUser.token,
       createdAt: demoUser.createdAt,
+      isEmailVerified: demoUser.isEmailVerified,
       ...(demoUser.ownedShopId && { ownedShopId: demoUser.ownedShopId })
     };
   }
@@ -85,7 +90,8 @@ const simulateDemoRegistration = (userData: RegistrationData): User => {
     name: userData.name,
     userType, // RegistrationData already ensures this is "customer" | "shopOwner" | "admin"
     token: `demo-${userType}-token-${Date.now()}`,
-    createdAt: new Date()
+    createdAt: new Date(),
+    isEmailVerified: false // New users start with unverified email
   };
   
   return newUser;
@@ -108,6 +114,7 @@ export const register = async (userData: RegistrationData) => {
       userType: userType,
       token: response.data.token,
       createdAt: response.data.createdAt,
+      isEmailVerified: false, // New registrations start with unverified email
       ...(response.data.ownedShopId && { ownedShopId: response.data.ownedShopId })
     };
     
@@ -151,6 +158,7 @@ export const login = async (credentials: Credentials) => {
       userType: userType,
       token: response.data.token,
       createdAt: response.data.createdAt,
+      isEmailVerified: response.data.isEmailVerified || false,
       ...(response.data.ownedShopId && { ownedShopId: response.data.ownedShopId })
     };
     
@@ -217,9 +225,24 @@ export const getCurrentUser = async () => {
     // First try to use stored user data
     const parsedUser = JSON.parse(storedUser);
     
+    // Ensure the stored user data has all required fields
+    if (!parsedUser.id || !parsedUser.email || !parsedUser.name || !parsedUser.userType) {
+      console.error("Stored user data is invalid");
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('currentUser');
+      return null;
+    }
+
+    // Add isEmailVerified if it's missing (backward compatibility)
+    if (typeof parsedUser.isEmailVerified !== 'boolean') {
+      parsedUser.isEmailVerified = false;
+    }
+    
     try {
       // Verify the token is still valid with the server
-      await api.get('/users/me');
+      const response = await api.get('/users/me');
+      // Update email verification status from server
+      parsedUser.isEmailVerified = response.data.isEmailVerified || false;
       return parsedUser;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {

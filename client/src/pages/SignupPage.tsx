@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -14,6 +13,7 @@ import Layout from "@/components/Layout";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { EmailVerification } from "@/components/EmailVerification";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -26,9 +26,12 @@ const formSchema = z.object({
 
 const SignupPage = () => {
   const { signup } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [networkIssue, setNetworkIssue] = useState(false);
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,8 +49,10 @@ const SignupPage = () => {
     setNetworkIssue(false);
     
     try {
-      await signup(values.email, values.password, values.name, values.userType);
-      toast.success("Account created successfully!");
+      const user = await signup(values.email, values.password, values.name, values.userType);
+      toast.success("Account created successfully! Please verify your email.");
+      setRegisteredEmail(values.email);
+      setShowEmailVerification(true);
     } catch (error: any) {
       if (error.message?.includes("Network") || error.code === "ERR_NETWORK") {
         setNetworkIssue(true);
@@ -90,104 +95,125 @@ const SignupPage = () => {
             </div>
           )}
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="your.email@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="userType"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>Account Type</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="customer" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Customer - Order food from restaurants
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="shopOwner" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Shop Owner - Register and manage your restaurant
-                          </FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          {!showEmailVerification ? (
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Your Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="your.email@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="••••••••" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <Button 
-                type="submit" 
-                className="w-full bg-orange-600 hover:bg-orange-700 dark:bg-orange-600 dark:hover:bg-orange-700"
-                variant="indian"
-                disabled={isLoading}
-              >
-                {isLoading ? "Creating Account..." : "Create Account"}
-              </Button>
-            </form>
-          </Form>
+                <FormField
+                  control={form.control}
+                  name="userType"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>Account Type</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex flex-col space-y-1"
+                        >
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="customer" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Customer - Order food from restaurants
+                            </FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="shopOwner" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Restaurant Owner - Register your restaurant
+                            </FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 dark:text-gray-300">
-              Already have an account?{" "}
-              <Link to="/login" className="text-orange-600 dark:text-orange-500 font-medium hover:underline">
-                Sign in
-              </Link>
-            </p>
-          </div>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-orange-600 hover:bg-orange-700 dark:bg-orange-600 dark:hover:bg-orange-700"
+                  variant="indian"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Creating Account..." : "Create Account"}
+                </Button>
+              </form>
+            </Form>
+          ) : (
+            <div className="mt-6">
+              <div className="text-center mb-4">
+                <h2 className="text-xl font-semibold">Verify Your Email</h2>
+                <p className="text-gray-600 dark:text-gray-300 mt-1">
+                  Please verify your email address to complete registration
+                </p>
+              </div>
+              <EmailVerification
+                email={registeredEmail}
+                onVerificationComplete={() => {
+                  toast.success("Email verified successfully! You can now log in.");
+                  // Redirect to login page after successful verification
+                  window.location.href = "/login";
+                }}
+              />
+            </div>
+          )}
+
+          {!showEmailVerification && (
+            <div className="mt-6 text-center">
+              <p className="text-gray-600 dark:text-gray-300">
+                Already have an account?{" "}
+                <Link to="/login" className="text-orange-600 dark:text-orange-500 font-medium hover:underline">
+                  Sign in
+                </Link>
+              </p>
+            </div>
+          )}
         </motion.div>
       </div>
     </Layout>

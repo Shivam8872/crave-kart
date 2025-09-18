@@ -11,6 +11,12 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 
+// Import routes
+const emailVerificationRoutes = require('./routes/emailVerificationRoutes');
+
+// Use routes
+app.use('/api/email', emailVerificationRoutes);
+
 // MongoDB Connection
 const dbUrl = process.env.MONGODB_URI || 'mongodb://localhost:27017/food-delivery-app'
 ;
