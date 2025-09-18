@@ -80,7 +80,7 @@ export const createOrder = async (orderData: {
     };
     
     // Add timeout to prevent hanging requests
-    const response = await api.post('/orders', processedOrderData, { timeout: 10000 });
+    const response = await api.post('/api/orders', processedOrderData, { timeout: 10000 });
     console.log('Order created successfully:', response.data);
     return response.data;
   } catch (error) {
@@ -114,7 +114,7 @@ export const getUserOrders = async (userId: string): Promise<Order[]> => {
     
     // First try to get orders from API
     try {
-      const response = await api.get(`/orders/user/${userId}`);
+      const response = await api.get(`/api/orders/user/${userId}`);
       
       // Ensure we only return orders that belong to this user
       const apiOrders = response.data;
@@ -177,7 +177,7 @@ export const getShopOrders = async (shopId: string): Promise<Order[]> => {
     }
     
     // Otherwise get from API
-    const response = await api.get(`/orders/shop/${shopId}`);
+    const response = await api.get(`/api/orders/shop/${shopId}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
@@ -211,7 +211,7 @@ export const updateOrderStatus = async (
     }
     
     // Otherwise update via API
-    const response = await api.patch(`/orders/${orderId}/status`, { status });
+    const response = await api.patch(`/api/orders/${orderId}/status`, { status });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
@@ -240,7 +240,7 @@ export const getOrderById = async (orderId: string): Promise<Order> => {
     }
     
     // Otherwise get from API
-    const response = await api.get(`/orders/${orderId}`);
+    const response = await api.get(`/api/orders/${orderId}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
