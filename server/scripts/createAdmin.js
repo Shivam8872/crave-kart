@@ -3,10 +3,14 @@
  * This script is for creating an admin user directly.
  * It should be run by the site owner or administrator through the server terminal.
  * DO NOT expose this script to the public web interface.
- * 
- * To use: 
+ *
+ * To use:
  * 1. Navigate to server directory
  * 2. Run: node scripts/createAdmin.js admin@example.com securePassword "Admin Name"
+ *
+ * Behavior:
+ * - Will create or update the user to role 'admin'
+ * - Will also mark the user's email as verified (isEmailVerified=true) so OTP is not required for login
  */
 
 require('dotenv').config();
@@ -42,10 +46,19 @@ const createAdmin = async () => {
       // If the user exists but is not an admin, update to admin
       if (existingUser.userType !== 'admin') {
         existingUser.userType = 'admin';
+        // Ensure admin created/updated via script is email-verified
+        existingUser.isEmailVerified = true;
         await existingUser.save();
-        console.log(`User ${email} role updated to admin.`);
+        console.log(`User ${email} role updated to admin and marked as email verified.`);
       } else {
-        console.log(`User ${email} is already an admin.`);
+        // If already admin, still ensure email is verified
+        if (!existingUser.isEmailVerified) {
+          existingUser.isEmailVerified = true;
+          await existingUser.save();
+          console.log(`User ${email} was admin; email marked as verified.`);
+        } else {
+          console.log(`User ${email} is already an admin and email is verified.`);
+        }
       }
     } else {
       // Create new admin user - password will be hashed by pre-save hook
@@ -53,11 +66,13 @@ const createAdmin = async () => {
         email,
         password,
         name,
-        userType: 'admin'
+        userType: 'admin',
+        // Mark email verified so OTP isn't required for terminal-created admins
+        isEmailVerified: true
       });
       
       await admin.save();
-      console.log(`Admin user ${email} created successfully.`);
+      console.log(`Admin user ${email} created successfully and marked as email verified.`);
     }
     
     mongoose.disconnect();
