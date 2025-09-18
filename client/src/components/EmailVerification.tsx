@@ -1,17 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '../hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import api from '@/services/api';
 
 interface EmailVerificationProps {
   email: string;
-  onVerificationComplete?: () => void;
+  // mode: 'pre' for pre-registration verification, 'post' for after account exists
+  mode?: 'pre' | 'post';
+  // For pre mode, we'll pass emailVerifiedToken back via this callback
+  onVerificationComplete?: (payload?: { emailVerifiedToken?: string }) => void;
   className?: string;
 }
 
 export const EmailVerification: React.FC<EmailVerificationProps> = ({
   email,
+  mode = 'post',
   onVerificationComplete,
   className = '',
 }) => {
@@ -20,19 +27,20 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
   const [sendingOtp, setSendingOtp] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(true); // Show OTP input by default
   const { toast } = useToast();
+  const { setCurrentUser } = useAuth();
+  const navigate = useNavigate();
+
+  // Auto-send OTP when component mounts
+  useEffect(() => {
+    handleSendOTP();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSendOTP = async () => {
     try {
       setSendingOtp(true);
-      const response = await fetch('http://localhost:5000/api/email/send-verification-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
+      const response = await api.post('/api/email/send-verification-otp', { email });
+      const data = response.data;
       
       if (data.success) {
         toast({
@@ -67,25 +75,47 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
 
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/email/verify-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, otp }),
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        toast({
-          title: 'Success!',
-          description: 'Email verified successfully',
-          variant: 'default',
-        });
-        onVerificationComplete?.();
+      if (mode === 'pre') {
+        // Pre-registration: only verify OTP and return token to parent
+        const response = await api.post('/api/email/verify-otp', { email, otp });
+        const data = response.data;
+        if (data.success) {
+          toast({ title: 'Success!', description: 'OTP verified', variant: 'default' });
+          onVerificationComplete?.({ emailVerifiedToken: data.emailVerifiedToken });
+        } else {
+          throw new Error(data.message || 'Invalid OTP');
+        }
       } else {
-        throw new Error(data.message || 'Invalid OTP');
+        // Post-registration: verify and log user in
+        const response = await api.post('/api/email/verify-email', { email, otp });
+        const data = response.data;
+        if (data.success) {
+          // Persist session so user is logged in directly after verification
+          const updatedUser = data.user ?? { email, isEmailVerified: true };
+          const token = data.token;
+
+          if (token) {
+            localStorage.setItem('authToken', token);
+          }
+          localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+          setCurrentUser(updatedUser);
+
+          toast({ title: 'Success!', description: 'Email verified successfully', variant: 'default' });
+
+          // Navigate based on role if available
+          const role = updatedUser.userType;
+          if (role === 'admin') {
+            navigate('/admin');
+          } else if (role === 'shopOwner') {
+            navigate('/register-shop');
+          } else {
+            navigate('/');
+          }
+
+          onVerificationComplete?.();
+        } else {
+          throw new Error(data.message || 'Invalid OTP');
+        }
       }
     } catch (error) {
       toast({

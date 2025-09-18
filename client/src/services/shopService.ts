@@ -58,7 +58,7 @@ export const getAllShops = async (isAdmin: boolean = false, status?: string) => 
       
       // Convert params object to query string
       const queryString = new URLSearchParams(params).toString();
-      const url = queryString ? `/shops?${queryString}` : '/shops';
+      const url = queryString ? `/api/shops?${queryString}` : '/api/shops';
       
       console.log('Fetching shops with URL:', url);
       const response = await api.get(url);
@@ -82,7 +82,7 @@ export const getShopById = async (shopId: string, userId?: string) => {
       }
       
       const queryString = new URLSearchParams(params).toString();
-      const url = queryString ? `/shops/${shopId}?${queryString}` : `/shops/${shopId}`;
+      const url = queryString ? `/api/shops/${shopId}?${queryString}` : `/api/shops/${shopId}`;
       
       const response = await api.get(url);
       return response.data;
@@ -98,7 +98,7 @@ export const getShopById = async (shopId: string, userId?: string) => {
 export const getShopFoodItems = async (shopId: string) => {
   return withRetry(async () => {
     try {
-      const response = await api.get(`/shops/${shopId}/food-items`);
+      const response = await api.get(`/api/shops/${shopId}/food-items`);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -112,7 +112,7 @@ export const getShopFoodItems = async (shopId: string) => {
 export const getShopOffers = async (shopId: string) => {
   return withRetry(async () => {
     try {
-      const response = await api.get(`/shops/${shopId}/offers`);
+      const response = await api.get(`/api/shops/${shopId}/offers`);
       return response.data;
     } catch (error) {
       console.error('Error fetching shop offers:', error);
@@ -155,7 +155,7 @@ export const registerShop = async (shopData: ShopData) => {
     // Log the full request being sent, emphasizing the ownerId
     console.log('Sending shop registration with ownerId:', shopData.ownerId);
     
-    const response = await api.post('/shops', shopData);
+    const response = await api.post('/api/shops', shopData);
     console.log('Shop registration successful:', response.data);
     return response.data;
   } catch (error) {
@@ -176,7 +176,7 @@ export const updateShop = async (shopId: string, shopData: Partial<ShopData>, us
         userType
       };
       
-      const response = await api.patch(`/shops/${shopId}`, dataWithUserType);
+      const response = await api.patch(`/api/shops/${shopId}`, dataWithUserType);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -190,7 +190,7 @@ export const updateShop = async (shopId: string, shopData: Partial<ShopData>, us
 export const deleteShop = async (shopId: string, ownerId: string) => {
   return withRetry(async () => {
     try {
-      const response = await api.delete(`/shops/${shopId}`, { data: { ownerId } });
+      const response = await api.delete(`/api/shops/${shopId}`, { data: { ownerId } });
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {

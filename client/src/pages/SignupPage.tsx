@@ -25,13 +25,14 @@ const formSchema = z.object({
 });
 
 const SignupPage = () => {
-  const { signup } = useAuth();
+  const { signup, setCurrentUser } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [networkIssue, setNetworkIssue] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
+  const [pendingValues, setPendingValues] = useState<z.infer<typeof formSchema> | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,22 +45,19 @@ const SignupPage = () => {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    // Step 1: Do NOT register yet. Trigger pre-registration OTP flow.
     setIsLoading(true);
     setError(null);
     setNetworkIssue(false);
-    
+
     try {
-      const user = await signup(values.email, values.password, values.name, values.userType);
-      toast.success("Account created successfully! Please verify your email.");
+      // Store values to use after OTP verification
+      setPendingValues(values);
       setRegisteredEmail(values.email);
-      setShowEmailVerification(true);
+      setShowEmailVerification(true); // This will render EmailVerification which auto-sends OTP
+      toast.success("Verification code sent! Please check your email.");
     } catch (error: any) {
-      if (error.message?.includes("Network") || error.code === "ERR_NETWORK") {
-        setNetworkIssue(true);
-        setError("Network connection issue. Trying fallback registration method...");
-      } else {
-        setError(error.message || "Registration failed. Please try again.");
-      }
+      setError(error.message || "Failed to initiate verification.");
     } finally {
       setIsLoading(false);
     }
@@ -195,10 +193,46 @@ const SignupPage = () => {
               </div>
               <EmailVerification
                 email={registeredEmail}
-                onVerificationComplete={() => {
-                  toast.success("Email verified successfully! You can now log in.");
-                  // Redirect to login page after successful verification
-                  window.location.href = "/login";
+                mode="pre"
+                onVerificationComplete={async (payload) => {
+                  if (!pendingValues) return;
+                  const { emailVerifiedToken } = payload || {};
+                  if (!emailVerifiedToken) {
+                    toast.error("Verification token missing. Please try again.");
+                    return;
+                  }
+
+                  try {
+                    // Step 2: Register account after OTP verification
+                    const newUser = await (await import("@/services/authService")).register({
+                      email: pendingValues.email,
+                      password: pendingValues.password,
+                      name: pendingValues.name,
+                      userType: pendingValues.userType,
+                      emailVerifiedToken
+                    });
+
+                    // Step 3: Persist session and redirect
+                    if (newUser.token) {
+                      localStorage.setItem('authToken', newUser.token);
+                    }
+                    localStorage.setItem('currentUser', JSON.stringify(newUser));
+                    setCurrentUser(newUser as any);
+
+                    toast.success("Account created and verified! You're now logged in.");
+
+                    // Navigate based on role
+                    const role = newUser.userType;
+                    if (role === 'admin') {
+                      navigate('/admin');
+                    } else if (role === 'shopOwner') {
+                      navigate('/register-shop');
+                    } else {
+                      navigate('/');
+                    }
+                  } catch (err: any) {
+                    toast.error(err.message || 'Registration failed after verification');
+                  }
                 }}
               />
             </div>

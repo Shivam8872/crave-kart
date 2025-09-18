@@ -7,6 +7,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
 import { useAuth } from '@/contexts/AuthContext';
+import api from '@/services/api';
 
 const VerifyEmailPage = () => {
   const [otp, setOtp] = useState('');
@@ -29,15 +30,8 @@ const VerifyEmailPage = () => {
   const handleSendOTP = async () => {
     try {
       setSendingOtp(true);
-      const response = await fetch('http://localhost:5000/api/email/send-verification-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: userData.email }),
-      });
-
-      const data = await response.json();
+      const response = await api.post('/api/email/send-verification-otp', { email: userData.email });
+      const data = response.data;
       
       if (data.success) {
         toast.success('Verification code sent! Please check your email.');
@@ -59,29 +53,27 @@ const VerifyEmailPage = () => {
 
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/email/verify-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: userData.email, otp }),
-      });
-
-      const data = await response.json();
+      const response = await api.post('/api/email/verify-email', { email: userData.email, otp });
+      const data = response.data;
       
       if (data.success) {
-        // Set the current user with email verified
-        setCurrentUser({
-          ...userData,
-          isEmailVerified: true
-        });
+        // Use updated user and token returned by backend to keep the session authenticated
+        const updatedUser = data.user ?? { ...userData, isEmailVerified: true };
+        const token = data.token;
+
+        if (token) {
+          localStorage.setItem('authToken', token);
+        }
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        setCurrentUser(updatedUser);
 
         toast.success('Email verified successfully!');
         
         // Redirect based on user type
-        if (userData.userType === 'admin') {
+        const role = updatedUser.userType || userData.userType;
+        if (role === 'admin') {
           navigate('/admin');
-        } else if (userData.userType === 'shopOwner') {
+        } else if (role === 'shopOwner') {
           navigate('/register-shop');
         } else {
           navigate('/');

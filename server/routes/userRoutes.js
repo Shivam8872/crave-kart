@@ -4,6 +4,8 @@ const router = express.Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { generateOTP, saveOTP } = require('../utils/otpUtils');
+const { sendOTPEmail } = require('../utils/emailService');
 
 // Get JWT secret from environment variable or use a default for development (not secure for production)
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_for_development';
@@ -95,7 +97,7 @@ router.post('/verify-email', async (req, res) => {
 
 // Create user (signup) - restrict to customer and shopOwner only
 router.post('/', async (req, res) => {
-  const { email, password, name, userType } = req.body;
+  const { email, password, name, userType, emailVerifiedToken } = req.body;
   
   try {
     // Check if user exists
@@ -108,19 +110,34 @@ router.post('/', async (req, res) => {
     if (!['customer', 'shopOwner'].includes(userType)) {
       return res.status(400).json({ message: 'Invalid user type' });
     }
+
+    // Require prior OTP verification via emailVerifiedToken
+    if (!emailVerifiedToken) {
+      return res.status(400).json({ message: 'Email not verified. Please verify OTP before registration.' });
+    }
+
+    try {
+      const decoded = jwt.verify(emailVerifiedToken, JWT_SECRET);
+      if (!decoded?.email || decoded.email.toLowerCase() !== email.toLowerCase()) {
+        return res.status(400).json({ message: 'Email verification token does not match the provided email.' });
+      }
+    } catch (e) {
+      return res.status(400).json({ message: 'Invalid or expired email verification token. Please verify OTP again.' });
+    }
     
     const user = new User({
       email,
       password,
       name,
-      userType
+      userType,
+      isEmailVerified: false
     });
     
     const newUser = await user.save();
     const userResponse = { ...newUser._doc };
     delete userResponse.password;
-    
-    // Generate token
+
+    // Issue token on successful registration (email already verified via token)
     const token = generateToken(newUser);
     
     res.status(201).json({
@@ -141,6 +158,21 @@ router.post('/login', async (req, res) => {
     
     if (!user) {
       return res.status(400).json({ message: 'Invalid email or password' });
+    }
+    
+    // Enforce email verification before allowing login
+    if (!user.isEmailVerified) {
+      try {
+        // Generate and save OTP, then send email (best-effort; do not block on errors)
+        const otp = generateOTP();
+        await saveOTP(email, otp);
+        await sendOTPEmail(email, otp);
+      } catch (e) {
+        console.error('Error resending OTP during login:', e);
+      }
+      return res.status(403).json({
+        message: 'Email not verified. We have sent a new verification code to your email. Please verify to continue.'
+      });
     }
     
     // Use the comparePassword method we added to the User model

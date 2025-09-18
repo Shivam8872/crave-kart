@@ -9,9 +9,16 @@ declare module 'axios' {
   }
 }
 
-// Use environment variables if available or fall back to the deployed backend URL for production
-// In production, change this to your actual deployed backend URL
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+// Use environment variables if available or fall back to localhost
+// Normalize to avoid duplicate /api when endpoints already include it
+let RAW_API_URL = (import.meta.env.VITE_API_URL as string) || "http://localhost:5000";
+// Remove trailing slash
+if (RAW_API_URL.endsWith('/')) RAW_API_URL = RAW_API_URL.slice(0, -1);
+// If env already includes /api at the end, strip it to keep domain root here
+if (RAW_API_URL.toLowerCase().endsWith('/api')) {
+  RAW_API_URL = RAW_API_URL.slice(0, -4);
+}
+const API_URL = RAW_API_URL;
 
 // Create axios instance
 const api = axios.create({

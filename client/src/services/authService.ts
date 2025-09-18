@@ -12,6 +12,7 @@ export interface RegistrationData {
   password: string;
   name: string;
   userType: "customer" | "shopOwner" | "admin";
+  emailVerifiedToken?: string; // optional token obtained after verifying OTP in pre-registration flow
 }
 
 export interface User {
@@ -99,7 +100,7 @@ const simulateDemoRegistration = (userData: RegistrationData): User => {
 
 export const register = async (userData: RegistrationData) => {
   try {
-    const response = await api.post('/users', userData);
+    const response = await api.post('/api/users', userData);
     
     // Add the token to the response data and ensure we have an id property
     const userType = response.data.userType;
@@ -143,7 +144,7 @@ export const register = async (userData: RegistrationData) => {
 
 export const login = async (credentials: Credentials) => {
   try {
-    const response = await api.post('/users/login', credentials);
+    const response = await api.post('/api/users/login', credentials);
     
     // Validate and type the user data
     const userType = response.data.userType;
@@ -199,7 +200,7 @@ export const logout = async () => {
     if (token) {
       try {
         // Call the logout endpoint if your API has one
-        await api.post('/users/logout');
+        await api.post('/api/users/logout');
       } catch (error) {
         console.error("Error calling logout endpoint:", error);
         // Continue with local logout even if server logout fails
@@ -240,7 +241,7 @@ export const getCurrentUser = async () => {
     
     try {
       // Verify the token is still valid with the server
-      const response = await api.get('/users/me');
+      const response = await api.get('/api/users/me');
       // Update email verification status from server
       parsedUser.isEmailVerified = response.data.isEmailVerified || false;
       return parsedUser;
