@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -10,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useAuth } from "@/contexts/AuthContext";
 import Layout from "@/components/Layout";
-import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
@@ -39,45 +37,14 @@ const LoginPage = () => {
     setIsLoading(true);
     setError(null);
     setNetworkIssue(false);
-    
+
     try {
       await login(values.email, values.password);
-      
-      // Get current user after login
-      const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
-      
-      // Show success message
-      toast.success("Login successful!");
-      
-      // Redirect based on user type
-      if (currentUser) {
-        if (currentUser.userType === "admin") {
-          navigate("/admin");
-        } else if (currentUser.userType === "shopOwner") {
-          if (currentUser.ownedShopId) {
-            navigate("/shop-dashboard");
-          } else {
-            navigate("/register-shop");
-          }
-        } else {
-          // For customers, redirect to the page they were trying to access, or to the home page
-          const params = new URLSearchParams(location.search);
-          const redirectTo = params.get("redirect");
-          
-          if (redirectTo === "cart") {
-            navigate("/cart");
-          } else {
-            navigate("/");
-          }
-        }
-      }
+      // ✅ Success toast + navigation handled inside AuthContext
     } catch (error: any) {
       if (error.message?.includes("Network") || error.code === "ERR_NETWORK") {
         setNetworkIssue(true);
         setError("Network connection issue. Trying fallback login method...");
-        
-        // We'll let the fallback logic in authService.ts handle this
-        // The message will be shown temporarily until either success or another error
       } else {
         setError(error.message || "Login failed. Please try again.");
       }
@@ -135,7 +102,7 @@ const LoginPage = () => {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="password"
