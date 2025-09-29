@@ -48,7 +48,7 @@ export interface Shop {
   };
   status?: string;
   createdAt?: Date;
-  _id?: string; // Add this field to handle MongoDB ID format
+  _id?: string;
 }
 
 const AuthContext = createContext<AuthContextProps>({
@@ -72,7 +72,6 @@ const AuthContext = createContext<AuthContextProps>({
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  // Initialize currentUser as null - we'll load it from the API
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,19 +80,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check auth status on mount and handle stored credentials
   useEffect(() => {
     const checkAuthStatus = async () => {
       setIsLoading(true);
       try {
-        // Try to get user from stored credentials
         const user = await auth.getCurrentUser();
-        
         if (user) {
           setCurrentUser(user);
-          console.log("Restored auth state for user:", user.email);
-          
-          // If we're on the login page, redirect to appropriate dashboard
           if (window.location.pathname === '/login') {
             if (user.userType === 'admin') {
               navigate('/admin');
@@ -104,15 +97,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
           }
         } else {
-          // If no valid stored credentials and we're on a protected route,
-          // redirect to login
           const protectedRoutes = ['/admin', '/shop-dashboard', '/profile'];
           if (protectedRoutes.some(route => window.location.pathname.startsWith(route))) {
             navigate('/login');
           }
         }
-      } catch (error) {
-        console.error("Error checking auth status:", error);
+      } catch {
         setCurrentUser(null);
       } finally {
         setIsLoading(false);
@@ -122,48 +112,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     checkAuthStatus();
   }, [navigate]);
 
-  // Fetch user's shop when user is loaded
   useEffect(() => {
     const fetchUserShop = async () => {
-      // Skip if we're already fetching shop data or if there's no current user
       if (shopDataFetchStatus === 'fetching' || !currentUser) {
         return;
       }
-      
-      // Check if user is a shop owner and has a shop ID
       if (currentUser && currentUser.userType === "shopOwner" && currentUser.ownedShopId) {
         try {
           setShopDataFetchStatus('fetching');
-          console.log("AuthContext: Fetching shop data for user with shop ID:", currentUser.ownedShopId);
-          
-          // First see if the shop exists in the local state with matching ID
           if (userShop && (userShop.id === currentUser.ownedShopId || userShop._id === currentUser.ownedShopId)) {
-            console.log("AuthContext: Shop already loaded:", userShop);
             setShopDataFetchStatus('fetched');
             return;
           }
-          
-          // Otherwise fetch from API
           const shop = await shopService.getShopById(currentUser.ownedShopId, currentUser.id);
-          
           if (shop) {
-            console.log("AuthContext: Shop data loaded:", shop);
             setUserShop({
               ...shop,
               id: shop.id || shop._id
             });
           } else {
-            console.log("AuthContext: No shop data returned from API");
             setUserShop(null);
           }
-        } catch (error) {
-          console.error("AuthContext: Failed to load user's shop:", error);
+        } catch {
           setUserShop(null);
         } finally {
           setShopDataFetchStatus('fetched');
         }
       } else {
-        console.log("AuthContext: User has no shop ID or is not shop owner, clearing shop state");
         setUserShop(null);
         setShopDataFetchStatus('fetched');
       }
@@ -177,9 +152,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setError(null);
     try {
       const user = await auth.login({ email, password });
+
+      if (!user) {
+        throw new Error("Invalid credentials");
+      }
+
       setCurrentUser(user);
-      
-      // Redirect based on user type
+
+      toast({
+        title: "Login successful",
+        description: `Welcome back, ${user.name || "user"}!`
+      });
+
       if (user.userType === 'admin') {
         navigate("/admin");
       } else if (user.userType === 'shopOwner') {
@@ -194,6 +178,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Login failed",
         description: error.message || "Failed to login"
       });
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -204,7 +189,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setError(null);
     try {
       const user = await auth.register({ email, password, name, userType: userType as "customer" | "shopOwner" | "admin" });
-      // Don't set current user or navigate until email is verified
       return user;
     } catch (error: any) {
       setError(error.message || "Failed to register");
@@ -221,17 +205,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     try {
-      // Attempt to logout with the server
       await auth.logout();
-    } catch (error) {
-      console.error("Error during logout:", error);
-    } finally {
-      // Clear context state
+    } catch {}
+    finally {
       setCurrentUser(null);
       setUserShop(null);
       setShopDataFetchStatus('idle');
-      
-      // Redirect to login page
       navigate("/login");
     }
   };
@@ -239,48 +218,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const registerShop = async (shopData: Omit<Shop, "id" | "ownerId">) => {
     try {
       if (!currentUser) throw new Error("You must be logged in to register a shop");
-      
-      console.log("Registering shop with currentUser:", currentUser);
-      
-      // Get user ID, accounting for both id and _id properties
       const userId = currentUser.id || currentUser._id;
-      
       if (!userId) {
         throw new Error("User ID is missing. Please log in again.");
       }
-      
-      // Create shopData object with userId explicitly set as ownerId
       const shopDataWithOwner = {
         ...shopData,
         ownerId: userId,
-        status: "pending" // Set default status as pending
+        status: "pending"
       };
-      
-      console.log("Prepared shop data with owner:", shopDataWithOwner);
-      
       const response = await shopService.registerShop(shopDataWithOwner);
       const shopId = response._id || response.id;
-      
-      // Update local user state to include owned shop
       setCurrentUser(prev => prev ? {
         ...prev,
         ownedShopId: shopId
       } : null);
-      
-      // Update shop state immediately
       setUserShop({
         ...response,
         id: shopId
       });
-      
       toast({
         title: "Shop Registered",
         description: "Your shop has been submitted for approval. You'll be notified once it's approved."
       });
-      
       return shopId;
     } catch (error) {
-      console.error('Failed to register shop:', error);
       throw error;
     }
   };
@@ -288,17 +250,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const updateShop = async (shopId: string, shopData: Partial<Shop>) => {
     try {
       if (!currentUser) throw new Error("You must be logged in to update a shop");
-      
       await shopService.updateShop(shopId, shopData);
-      
-      // Update local shop state
       if (userShop && userShop.id === shopId) {
         setUserShop({
           ...userShop,
           ...shopData
         });
       }
-      
       toast({
         title: "Success",
         description: "Shop updated successfully"
@@ -316,15 +274,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const deleteShop = async (shopId: string) => {
     try {
       if (!currentUser) throw new Error("You must be logged in to delete a shop");
-      
       await shopService.deleteShop(shopId, currentUser.id);
-      
-      // Update local user state to remove owned shop
       setCurrentUser(prev => prev ? {
         ...prev,
         ownedShopId: undefined
       } : null);
-      
       toast({
         title: "Success",
         description: "Shop deleted successfully"
@@ -339,64 +293,45 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Add a function to refresh the user's shop data
   const refreshUserShop = async () => {
-    // Prevent multiple simultaneous refreshes
     if (shopDataFetchStatus === 'fetching') {
-      console.log("RefreshUserShop: Already fetching shop data, skipping");
       return false;
     }
-    
     if (currentUser?.ownedShopId) {
       try {
         setShopDataFetchStatus('fetching');
-        console.log("Refreshing shop data for:", currentUser.ownedShopId);
         const shopData = await shopService.getShopById(currentUser.ownedShopId, currentUser.id);
-        
         if (shopData) {
-          console.log("RefreshUserShop: Shop data refreshed:", shopData);
           setUserShop({
             ...shopData,
             id: shopData.id || shopData._id
           });
           setShopDataFetchStatus('fetched');
           return true;
-        } else {
-          console.log("RefreshUserShop: No shop data returned");
         }
-      } catch (error) {
-        console.error("Failed to refresh user's shop:", error);
+      } catch {
       } finally {
         setShopDataFetchStatus('fetched');
       }
-    } else {
-      console.log("RefreshUserShop: No shop ID to refresh");
     }
     return false;
   };
 
   const getUserOwnedShop = () => {
-    console.log("getUserOwnedShop called, returning:", userShop);
     return userShop;
   };
-  
-  // Check if current user is admin
+
   const isAdmin = () => {
     return currentUser?.userType === 'admin';
   };
-  
-  // Approve a shop (admin only)
+
   const approveShop = async (shopId: string) => {
     try {
       if (!currentUser || currentUser.userType !== 'admin') {
         throw new Error("Only admins can approve shops");
       }
-      
       await shopService.updateShop(shopId, { status: "approved" }, currentUser.userType);
-      
-      // Refresh the shop data in context if it's the user's shop
       await refreshUserShop();
-      
       toast({
         title: "Shop Approved",
         description: "The shop has been approved and is now visible to customers"
@@ -410,16 +345,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       throw error;
     }
   };
-  
-  // Deny a shop (admin only)
+
   const denyShop = async (shopId: string) => {
     try {
       if (!currentUser || currentUser.userType !== 'admin') {
         throw new Error("Only admins can deny shops");
       }
-      
       await shopService.updateShop(shopId, { status: "rejected" }, currentUser.userType);
-      
       toast({
         title: "Shop Denied",
         description: "The shop has been rejected"
